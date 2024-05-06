@@ -7,41 +7,37 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 
-public class OrderScreen extends ScreenAdapter{
+public class FinishScreen extends ScreenAdapter{
     //Fields
-    private Main game;
-    private Globals globals;
-    
     //Assets
     private Texture counter = new Texture("counter.png");
     private Texture moneyBanner = new Texture("moneyBanner.png");
     private Texture background = new Texture("background.png");
     
+    //Other important variables
+    private Main game;
+    private Globals globals;
+    private FinishHelper helper;
+    
     //Constructor
-    public OrderScreen(Main game){
+    public FinishScreen(Main game){
         this.game = game;
         this.globals = Globals.getInstance();
-        globals.setCustomer(new Customer());
-        globals.setOrderScreen(true);
+        this.helper = new FinishHelper();
     }
     
     @Override
     public void show(){
         //Code below gotten from https://happycoding.io/tutorials/libgdx/game-screens
-        //This code sets up an input processor that when the space key it either
-        //shows the text or goes to the next screen if the previous option has 
-        //already happened. If the escape key is pressed it exits the application
+        //This code sets up an input processor that when the space key is pressed it
+        //will advance to the next screen which is the OrderScreen or if they press
+        //escape it closes the application
         Gdx.input.setInputProcessor(new InputAdapter() {
             @Override
             public boolean keyDown(int keyCode) {
-                if (keyCode == Input.Keys.SPACE) {
-                    if (!globals.getShowText()){
-                        globals.setShowText(true);
-                    } else {
-                        globals.setOrderScreen(false);
-                        globals.setShowText(false);
-                        game.setScreen(new MakingScreen(game));
-                    }
+                if (keyCode == Input.Keys.SPACE && globals.getCustomer().getTalking()) {
+                    globals.getCustomer().setTalking(false);
+                    game.setScreen(new OrderScreen(game));
                 } else if (keyCode == Input.Keys.ESCAPE){
                     System.exit(0);
                 }
@@ -52,32 +48,34 @@ public class OrderScreen extends ScreenAdapter{
     
     @Override
     public void render(float delta){
-        //clear screen
+        
+        //Clear screen
         Gdx.gl.glClearColor(0, .25f, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         
-        //start drawing screen
+        //Begin drawing screen
         game.batch.begin();
-        
-        //draws scene
+        //Draw scene
         game.batch.draw(background, 0, game.screenH * 0.3f, game.screenW, game.screenH * 0.7f);
-        globals.getCustomer().draw(game);
         game.batch.draw(counter, 0,0,game.screenW, game.screenH * 0.3f);
         
-        //draws money banner
+        //Update finish helper
+        helper.update(game);
+        
+        //Draw the money in the bottom right
         game.batch.draw(moneyBanner, game.screenW * .8f, 0,game.screenW * 0.2f,game.screenH * 0.1f);
         game.font.getData().setScale(3);
         String s = String.format("%.2f", globals.getMoney());
         game.font.draw(game.batch, s, game.screenW * 0.86f, 80);
         game.font.getData().setScale(2);
         
-        //stop drawing screen
+        //Finish drawing screen
         game.batch.end();
     }
     
     @Override
     public void hide(){
-        //hides when screen is out of focus
+        //Gets rid of input processor when out of focus
         Gdx.input.setInputProcessor(null);
     }
 }
